@@ -1,7 +1,11 @@
 Option Explicit
 
+Dim args
+Set args = Wscript.Arguments
 
-AnalyseFichier "C:\Users\irpaui\Documents\APPEL_New\DOSBox\C\TEMP\Print\temp.HPG",  "C:\Users\irpaui\Desktop\temp.svg"
+AnalyseFichier args(0), args(1) 
+
+
 
 Sub AnalyseFichier(inputFile, outputFile)
 
