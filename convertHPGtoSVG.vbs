@@ -407,7 +407,7 @@ Sub AnalyseFichier(inputFile, outputFile)
                     If imprimeTerm = 0 Then
                          texte = texte & RemplaceCaractereSpeciaux(Mid(ligne, i, 1))
                     End If
-                    ecritureStream.WriteText "<text x =""" & Replace(nouvellePosition(0), ",", ".") & """ y=""" & Replace(nouvellePosition(1), ",", ".") & """" & _
+                    ecritureStream.WriteText "<text xml:space=""preserve"" x =""" & Replace(nouvellePosition(0), ",", ".") & """ y=""" & Replace(nouvellePosition(1), ",", ".") & """" & _
                                                 " transform=""rotate(" & angle & " " & Replace(nouvellePosition(0), ",", ".") & " " & Replace(nouvellePosition(1), ",", ".") & ")"" " & _
                                                 " style =""font-family:ISOCPEUR;font-size:" & Replace(taillePolice, ",", ".") & ";alignment-baseline:" & baseLineShift & ";text-anchor:" & anchor & """>" & _
                                                 texte & "</text>" & vbNewLine
@@ -486,8 +486,8 @@ Sub AnalyseFichier(inputFile, outputFile)
                             End If
 
                             If texte <> "" Then
-                                ecritureStream.WriteText "<text x =""" & Replace(nouvellePosition(0), ",", ".") & """ y=""" & Replace(nouvellePosition(1), ",", ".") & """" & _
-                                                " style =""font-family:Yu Gothic UI;font-weight:bold;font-size:" & Replace(taillePolice, ",", ".") & ";alignment-baseline:Middle;text-anchor:start"">" & _
+                                ecritureStream.WriteText "<text xml:space=""preserve"" x =""" & Replace(nouvellePosition(0), ",", ".") & """ y=""" & Replace(nouvellePosition(1), ",", ".") & """" & _
+                                                " style =""font-family:Calibri;font-weight:bold;font-size:" & Replace(taillePolice, ",", ".") & ";alignment-baseline:Middle;text-anchor:start"">" & _
                                                 texte & "</text>" & vbNewLine
                             End If
                         End If
