@@ -95,7 +95,7 @@ Sub AnalyseFichier(inputFile, outputFile)
                     tab_4parametres(2) = 2.5 + inputP(2) * 0.025
                     tab_4parametres(3) = 297 - 10 - inputP(3) * 0.025
                 
-                    'ecritureStream.WriteText "<rect x=""" & Replace(Min(tab_4parametres(0), tab_4parametres(2)), ",", ".") & """ y=""" & Replace(Min(tab_4parametres(1), tab_4parametres(3)), ",", ".") & """ width=""" & Replace(Abs(tab_4parametres(2) - tab_4parametres(0)), ",", ".") & """ height=""" & Replace(Abs(tab_4parametres(1) - tab_4parametres(3)), ",", ".") & """ " & pointilles & " style=""fill:none;stroke-linecap:round;stroke-width:0.05;stroke:powderblue""  />" & vbNewLine
+                    ecritureStream.WriteText "<rect x=""" & Replace(Min(tab_4parametres(0), tab_4parametres(2)), ",", ".") & """ y=""" & Replace(Min(tab_4parametres(1), tab_4parametres(3)), ",", ".") & """ width=""" & Replace(Abs(tab_4parametres(2) - tab_4parametres(0)), ",", ".") & """ height=""" & Replace(Abs(tab_4parametres(1) - tab_4parametres(3)), ",", ".") & """ " & pointilles & " style=""fill:none;stroke-linecap:round;stroke-width:0.05;stroke:powderblue""  />" & vbNewLine
                 ElseIf commande = "SC" Then
                     Call rempliTableau(i, ligne, echelle)
 
@@ -255,8 +255,7 @@ Sub AnalyseFichier(inputFile, outputFile)
                     'conversion des points récupérés dans le plan
                     point_centre(0) = tab_4parametres(0)
                     point_centre(1) = tab_4parametres(1)
-                    'Call changeRepere(point_centre, inputP, echelle, false)
-                    
+
                     rayon_ellipse(0) = Sqr((anciennePosition(0) - point_centre(0)) * (anciennePosition(0) - point_centre(0)) + (anciennePosition(1) - point_centre(1)) * (anciennePosition(1) - point_centre(1)))
                     rayon_ellipse(1) = Sqr((anciennePosition(0) - point_centre(0)) * (anciennePosition(0) - point_centre(0)) + (anciennePosition(1) - point_centre(1)) * (anciennePosition(1) - point_centre(1)))
                     
@@ -290,10 +289,16 @@ Sub AnalyseFichier(inputFile, outputFile)
                     Call changeRepere(nouvellePosition, inputP, echelle, False)
                     Call changeRepere(anciennePosition, inputP, echelle, False)
                     Call changeRepere(point_centre, inputP, echelle, False)
-                    Call changeRepere(rayon_ellipse, inputP, echelle, True)
-                    
+
+                    'ATTENTION !!!! hypothèse angle de l'ellipse parallèle aux axes du repères
+                    rayon_ellipse(1) = Sqr(((nouvellePosition(1) - point_centre(1)) * (nouvellePosition(1) - point_centre(1)) * (anciennePosition(0) - point_centre(0)) * (anciennePosition(0) - point_centre(0)) - (anciennePosition(1) - point_centre(1)) * (anciennePosition(1) - point_centre(1)) * (nouvellePosition(0) - point_centre(0)) * (nouvellePosition(0) - point_centre(0)) ) / ( (anciennePosition(0) - point_centre(0)) * (anciennePosition(0) - point_centre(0)) - (nouvellePosition(0) - point_centre(0)) * (nouvellePosition(0) - point_centre(0))))
+
+                    rayon_ellipse(0) = Sqr((rayon_ellipse(1) * rayon_ellipse(1) * (nouvellePosition(0) - point_centre(0)) * (nouvellePosition(0) - point_centre(0))) / ( rayon_ellipse(1) * rayon_ellipse(1) - (nouvellePosition(1) - point_centre(1)) * (nouvellePosition(1) - point_centre(1))) )
+
+                    'Call changeRepere(rayon_ellipse, inputP, echelle, True)
+
                     'Vérifie si le 2eme point est entre le point 1 et 3
-                    If Abs(angle) < pi Then
+                    If Abs(angle) <= pi Then
                         grandArc = 0
                     Else
                         grandArc = 1
@@ -429,6 +434,8 @@ Sub AnalyseFichier(inputFile, outputFile)
                             taillePolice = CStr(polyligne(1, j) * 0.352778) & "mm"
                         End If
                     Next
+                Else 
+                    'MsgBox commande
                 End If
             'Si le caractère est ESC
             ElseIf Mid(ligne, i, 1) = Chr(27) Then
@@ -615,6 +622,11 @@ End Sub
 Sub changeRepere(ByRef coordonnees, ByRef inputP, ByRef echelle, relatif)
     
     Dim tableauVide(3)
+
+    tableauVide(0) = 0
+    tableauVide(1) = 0
+    tableauVide(2) = 0 
+    tableauVide(3) = 0
     
     'On test si une echelle a été définie
     If (inputP(0) = inputP(2)) And (inputP(1) = inputP(3)) Then
