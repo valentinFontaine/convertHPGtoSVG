@@ -2,9 +2,7 @@ Option Explicit
 
 Dim args
 Set args = Wscript.Arguments
-
 AnalyseFichier args(0), args(1) 
-
 
 
 Sub AnalyseFichier(inputFile, outputFile)
@@ -13,6 +11,7 @@ Sub AnalyseFichier(inputFile, outputFile)
     Dim lectureStream 
     
     Dim mode, taillePolice, ligne, groupeRaster, parametreRaster, commande, terminaisonRaster    'Strings
+    Dim nbLigne
     Dim texte
     Dim penDown   ' boolean
 
@@ -37,7 +36,7 @@ Sub AnalyseFichier(inputFile, outputFile)
     pi = 3.14159265 
     mode = "Raster"
     penDown = False
-
+    
     Set ecritureStream = CreateObject("ADODB.Stream")
     Set lectureStream = CreateObject("ADODB.Stream")
 
@@ -54,8 +53,10 @@ Sub AnalyseFichier(inputFile, outputFile)
     ecritureStream.WriteText ligne & vbNewLine
     ecritureStream.WriteText Mid(ligne, 5, 5) & vbNewLine
 
+    nbLigne = 0
     While Not lectureStream.EOS
     
+        nbLigne = nbLigne + 1
         ligne = lectureStream.ReadText(-2)
         For i = 1 To Len(ligne)
             
@@ -438,6 +439,7 @@ Sub AnalyseFichier(inputFile, outputFile)
                 ElseIf parametreRaster = "%" Then
                      Call rempliTableau(i, ligne, tab_1parametres)
                      
+                     
                      i = i + 1
                      terminaisonRaster = Mid(ligne, i, 1)
                      
@@ -497,8 +499,7 @@ Sub AnalyseFichier(inputFile, outputFile)
                     groupeRaster = Mid(ligne, i, 1)
                     If groupeRaster = "s" Then
                         
-                        While Mid(ligne, i, 1) <> "p"
-                            
+                        While Mid(ligne, i, 1) <> "p" And Not(isUpperCase(Mid(ligne, i, 1))) And i <= len(ligne)
                             i = i + 1
                         Wend
                         
@@ -546,6 +547,11 @@ Function IsNumber(strValue)
     Next
 End Function
 
+Function isUpperCase(strValue)
+
+    isUpperCase = IsLetter(strValue) And (UCase(strValue) = strValue)
+
+End Function
 Function Min(a , b ) 
 
     If a < b Then
@@ -805,3 +811,5 @@ Function IIf( expr, truepart, falsepart )
    IIf = falsepart
    If expr Then IIf = truepart
 End Function
+
+
