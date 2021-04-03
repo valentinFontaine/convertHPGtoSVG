@@ -390,17 +390,17 @@ Sub AnalyseFichier(inputFile, outputFile)
                     End Select
                     Select Case CInt(labelOrigin(0))
                         Case 1, 4, 7
-                            baseLineShift = "baseline"
+                            baseLineShift = "text-top"
                         Case 11, 14, 17
-                            baseLineShift = "after-edge"
+                            baseLineShift = "text-after-edge"
                         Case 12, 2, 5, 15, 8, 18
                             baseLineShift = "middle"
                         Case 3, 6, 9
                             baseLineShift = "hanging"
                         Case 13, 16, 19
-                            baseLineShift = "before-edge"
+                            baseLineShift = "text-before-edge"
                         Case Else
-                            baseLineShift = "baseline"
+                            baseLineShift = "text-top"
                     End Select
                 ElseIf commande = "LB" Then
                     texte = ""
@@ -415,7 +415,7 @@ Sub AnalyseFichier(inputFile, outputFile)
                     End If
                     ecritureStream.WriteText "<text xml:space=""preserve"" x =""" & Replace(nouvellePosition(0), ",", ".") & """ y=""" & Replace(nouvellePosition(1), ",", ".") & """" & _
                                                 " transform=""rotate(" & angle & " " & Replace(nouvellePosition(0), ",", ".") & " " & Replace(nouvellePosition(1), ",", ".") & ")"" " & _
-                                                " style =""font-family:ISOCPEUR;font-size:" & Replace(taillePolice, ",", ".") & ";alignment-baseline:" & baseLineShift & ";text-anchor:" & anchor & """>" & _
+                                                " style =""font-family:ISOCPEUR;font-size:" & Replace(taillePolice, ",", ".") & ";dominant-baseline:" & baseLineShift & ";text-anchor:" & anchor & """>" & _
                                                 texte & "</text>" & vbNewLine
 
                 ElseIf commande = "DI" Then
@@ -496,7 +496,7 @@ Sub AnalyseFichier(inputFile, outputFile)
 
                             If texte <> "" Then
                                 ecritureStream.WriteText "<text xml:space=""preserve"" x =""" & Replace(nouvellePosition(0), ",", ".") & """ y=""" & Replace(nouvellePosition(1), ",", ".") & """" & _
-                                                " style =""font-family:Calibri;font-weight:bold;font-size:" & Replace(taillePolice, ",", ".") & ";alignment-baseline:Middle;text-anchor:start"">" & _
+                                                " style =""font-family:Calibri;font-weight:bold;font-size:" & Replace(taillePolice, ",", ".") & ";dominant-baseline:Middle;text-anchor:start"">" & _
                                                 texte & "</text>" & vbNewLine
                             End If
                         End If
