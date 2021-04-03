@@ -95,7 +95,7 @@ Sub AnalyseFichier(inputFile, outputFile)
                     tab_4parametres(2) = 2.5 + inputP(2) * 0.025
                     tab_4parametres(3) = 297 - 10 - inputP(3) * 0.025
                 
-                    ecritureStream.WriteText "<rect x=""" & Replace(Min(tab_4parametres(0), tab_4parametres(2)), ",", ".") & """ y=""" & Replace(Min(tab_4parametres(1), tab_4parametres(3)), ",", ".") & """ width=""" & Replace(Abs(tab_4parametres(2) - tab_4parametres(0)), ",", ".") & """ height=""" & Replace(Abs(tab_4parametres(1) - tab_4parametres(3)), ",", ".") & """ " & pointilles & " style=""fill:none;stroke-linecap:round;stroke-width:0.05;stroke:powderblue""  />" & vbNewLine
+                    'ecritureStream.WriteText "<rect x=""" & Replace(Min(tab_4parametres(0), tab_4parametres(2)), ",", ".") & """ y=""" & Replace(Min(tab_4parametres(1), tab_4parametres(3)), ",", ".") & """ width=""" & Replace(Abs(tab_4parametres(2) - tab_4parametres(0)), ",", ".") & """ height=""" & Replace(Abs(tab_4parametres(1) - tab_4parametres(3)), ",", ".") & """ " & pointilles & " style=""fill:none;stroke-linecap:round;stroke-width:0.05;stroke:powderblue""  />" & vbNewLine
                 ElseIf commande = "SC" Then
                     Call rempliTableau(i, ligne, echelle)
 
