@@ -18,7 +18,7 @@ Sub AnalyseFichier(inputFile, outputFile)
     Dim inputP(3), echelle(3), anciennePosition(1), nouvellePosition(1), tab_1parametres(0), tab_2parametres(1), tab_4parametres(3)
     Dim i, j     ' Integer
     Dim angle, largeurTrait 'Double
-    Dim pointilles, couleur
+    Dim pointilles, couleur, fillParameter
 
     Dim horaire               
     Dim grandArc              
@@ -31,7 +31,11 @@ Sub AnalyseFichier(inputFile, outputFile)
     Dim labelOrigin(0)
 
     Dim polyligne
-    polyligne=array()
+    Dim polygonMode 
+    Dim polygons
+
+    polyligne = array()
+    polygons = array()
 
     pi = 3.14159265 
     mode = "Raster"
@@ -107,16 +111,34 @@ Sub AnalyseFichier(inputFile, outputFile)
                             tab_2parametres(0) = polyligne(0, j)
                             tab_2parametres(1) = polyligne(1, j)
                             Call changeRepere(tab_2parametres, inputP, echelle, False)
+
+                            If polygonMode = True Then 
+                                If polygons(UBound(polygons)) = "" Then 
+                                    polygons(UBound(polygons)) = "M " & Replace(nouvellePosition(0), ",", ".") & " " & Replace(nouvellePosition(1), ",", ".")
+                                End If  
+                            End If
                             anciennePosition(0) = nouvellePosition(0)
                             anciennePosition(1) = nouvellePosition(1)
                             nouvellePosition(0) = tab_2parametres(0)
                             nouvellePosition(1) = tab_2parametres(1)
+                            
+                            If polygonMode Then 
+                                polygons(UBound(polygons)) = polygons(UBound(polygons)) & " M " & Replace(nouvellePosition(0), ",", ".") & " " & Replace(nouvellePosition(1), ",", ".")
+                            End If 
                         Next
                     End If
                 ElseIf commande = "PD" Then
                     penDown = True
                     If rempliPolyligne(i, ligne, polyligne) Then
-                        texte = Replace(nouvellePosition(0), ",", ".") & "," & Replace(nouvellePosition(1), ",", ".")
+                        If polygonMode Then
+                            If polygons(UBound(polygons)) = "" Then 
+                                polygons(UBound(polygons)) = "M " & Replace(nouvellePosition(0), ",", ".") & " " & Replace(nouvellePosition(1), ",", ".")
+                            Else 
+                                polygons(UBound(polygons)) = polygons(UBound(polygons)) & " L " & Replace(nouvellePosition(0), ",", ".") & " " & Replace(nouvellePosition(1), ",", ".")
+                            End If
+                        Else 
+                            texte = Replace(nouvellePosition(0), ",", ".") & "," & Replace(nouvellePosition(1), ",", ".")
+                        End If
                         For j = LBound(polyligne, 2) To UBound(polyligne, 2)
                             tab_2parametres(0) = polyligne(0, j)
                             tab_2parametres(1) = polyligne(1, j)
@@ -127,7 +149,11 @@ Sub AnalyseFichier(inputFile, outputFile)
                             anciennePosition(1) = nouvellePosition(1)
                             nouvellePosition(0) = tab_2parametres(0)
                             nouvellePosition(1) = tab_2parametres(1)
-                            texte = texte & " " & Replace(tab_2parametres(0), ",", ".") & "," & Replace(tab_2parametres(1), ",", ".")
+                            If polygonMode Then
+                                polygons(UBound(polygons)) = polygons(UBound(polygons)) & "L " & Replace(nouvellePosition(0), ",", ".") & " " & Replace(nouvellePosition(1), ",", ".")
+                            Else
+                                texte = texte & " " & Replace(nouvellePosition(0), ",", ".") & "," & Replace(nouvellePosition(1), ",", ".")
+                            End If
                         Next
                         ecritureStream.WriteText "<polyline points=""" & texte & """ " & pointilles & " style=""fill:none;stroke:" & couleur & ";stroke-linecap:round;stroke-linejoin:round;stroke-width:" & Replace(largeurTrait, ",", ".") & """ />" & vbNewLine
               
@@ -138,7 +164,15 @@ Sub AnalyseFichier(inputFile, outputFile)
                     Call rempliTableau(i, ligne, nouvellePosition)
                     Call changeRepere(nouvellePosition, inputP, echelle, false)
                     If penDown Then
-                        ecritureStream.WriteText "<line x1=""" & Replace(anciennePosition(0), ",", ".") & """ x2=""" & Replace(nouvellePosition(0), ",", ".") & """ y1=""" & Replace(anciennePosition(1), ",", ".") & """ y2=""" & Replace(nouvellePosition(1), ",", ".") & """ " & pointilles & " style=""fill:none;stroke:" & couleur & " ;stroke-linecap:round;stroke-width:" & Replace(largeurTrait, ",", ".") & """ />" & vbNewLine
+                        If polygonMode Then 
+                            polygons(UBound(polygons)) = polygons(UBound(polygons)) & " L " & Replace(nouvellePosition(0), ",", ".") & " " & Replace(nouvellePosition(1), ",", ".")
+                        Else
+                            ecritureStream.WriteText "<line x1=""" & Replace(anciennePosition(0), ",", ".") & """ x2=""" & Replace(nouvellePosition(0), ",", ".") & """ y1=""" & Replace(anciennePosition(1), ",", ".") & """ y2=""" & Replace(nouvellePosition(1), ",", ".") & """ " & pointilles & " style=""fill:none;stroke:" & couleur & " ;stroke-linecap:round;stroke-width:" & Replace(largeurTrait, ",", ".") & """ />" & vbNewLine
+                        End If
+                    Else 
+                        If polygonMode Then 
+                            polygons(UBound(polygons)) = polygons(UBound(polygons)) & " M " & Replace(nouvellePosition(0), ",", ".") & " " & Replace(nouvellePosition(1), ",", ".")
+                        End If 
                     End If   
 
                  ElseIf commande = "PR" Then
@@ -149,7 +183,15 @@ Sub AnalyseFichier(inputFile, outputFile)
                     nouvellePosition(0) = nouvellePosition(0) + anciennePosition(0)
                     nouvellePosition(1) = nouvellePosition(1) + anciennePosition(1)
                     If penDown Then
-                        ecritureStream.WriteText "<line x1=""" & Replace(anciennePosition(0), ",", ".") & """ x2=""" & Replace(nouvellePosition(0), ",", ".") & """ y1=""" & Replace(anciennePosition(1), ",", ".") & """ y2=""" & Replace(nouvellePosition(1), ",", ".") & """ " & pointilles & " style=""fill:none;stroke:" & couleur & ";stroke-linecap:round;stroke-width:" & Replace(largeurTrait, ",", ".") & """ />" & vbNewLine
+                        If polygonMode Then 
+                            polygons(UBound(polygons)) = polygons(UBound(polygons)) & " l " & Replace(nouvellePosition(0), ",", ".") & " " & Replace(nouvellePosition(1), ",", ".")
+                        Else
+                            ecritureStream.WriteText "<line x1=""" & Replace(anciennePosition(0), ",", ".") & """ x2=""" & Replace(nouvellePosition(0), ",", ".") & """ y1=""" & Replace(anciennePosition(1), ",", ".") & """ y2=""" & Replace(nouvellePosition(1), ",", ".") & """ " & pointilles & " style=""fill:none;stroke:" & couleur & ";stroke-linecap:round;stroke-width:" & Replace(largeurTrait, ",", ".") & """ />" & vbNewLine
+                        End If 
+                    Else
+                        If polygonMode Then 
+                            polygons(UBound(polygons)) = polygons(UBound(polygons)) & " m " & Replace(nouvellePosition(0), ",", ".") & " " & Replace(nouvellePosition(1), ",", ".")
+                        End If 
                     End If
 
                 ' ------------ Rectangles -----------
@@ -238,11 +280,15 @@ Sub AnalyseFichier(inputFile, outputFile)
                     End If
                     
                     
-                    ecritureStream.WriteText "<path d =""M" & Replace(anciennePosition(0), ",", ".") & "," & Replace(anciennePosition(1), ",", ".") & _
-                                                " A " & Replace(rayon, ",", ".") & " " & Replace(rayon, ",", ".") & " 0 " & Replace(grandArc, ",", ".") & " " & Replace(horaire, ",", ".") & _
-                                                " " & Replace(nouvellePosition(0), ",", ".") & "," & Replace(nouvellePosition(1), ",", ".") & _
-                                                """ " & pointilles & " style=""fill:none;stroke-linecap:round;stroke-width:" & Replace(largeurTrait, ",", ".") & ";stroke:" & couleur & """  />" & vbNewLine
+                    texte = " A " & Replace(rayon, ",", ".") & " " & Replace(rayon, ",", ".") & " 0 " & Replace(grandArc, ",", ".") & " " & Replace(horaire, ",", ".") & _ 
+                        " " & Replace(nouvellePosition(0), ",", ".") & "," & Replace(nouvellePosition(1), ",", ".")
 
+                    If polygonMode Then 
+                        polygons(UBound(polygons)) = polygons(UBound(polygons)) & texte
+                    Else 
+                        ecritureStream.WriteText "<path d =""M" & Replace(anciennePosition(0), ",", ".") & "," & Replace(anciennePosition(1), ",", ".") & texte & _
+                                                """ " & pointilles & " style=""fill:none;stroke-linecap:round;stroke-width:" & Replace(largeurTrait, ",", ".") & ";stroke:" & couleur & """  />" & vbNewLine
+                    End If 
 
                ElseIf commande = "AA" Then
                     Call rempliTableau(i, ligne, tab_4parametres)
@@ -311,11 +357,47 @@ Sub AnalyseFichier(inputFile, outputFile)
                         horaire = 0
                     End If
                     
-                    ecritureStream.WriteText "<path d =""M" & Replace(anciennePosition(0), ",", ".") & "," & Replace(anciennePosition(1), ",", ".") & _
-                                                " A " & Replace(rayon_ellipse(0), ",", ".") & " " & Replace(rayon_ellipse(1), ",", ".") & " 0 " & Replace(grandArc, ",", ".") & " " & Replace(horaire, ",", ".") & _
-                                                " " & Replace(nouvellePosition(0), ",", ".") & "," & Replace(nouvellePosition(1), ",", ".") & _
-                                                """ " & pointilles & " style=""fill:none;stroke-linecap:round;stroke-width:" & Replace(largeurTrait, ",", ".") & ";stroke:" & couleur & """ />" & vbNewLine
+                    texte = " A " & Replace(rayon_ellipse(0), ",", ".") & " " & Replace(rayon_ellipse(1), ",", ".") & " 0 " & Replace(grandArc, ",", ".") & " " & Replace(horaire, ",", ".") & _
+                            " " & Replace(nouvellePosition(0), ",", ".") & "," & Replace(nouvellePosition(1), ",", ".") 
 
+                    If polygonMode Then
+                        polygons(UBound(polygons)) = polygons(UBound(polygons)) & texte
+                    Else
+                        ecritureStream.WriteText "<path d =""M" & Replace(anciennePosition(0), ",", ".") & "," & Replace(anciennePosition(1), ",", ".") & texte & _
+                                                """ " & pointilles & " style=""fill:none;stroke-linecap:round;stroke-width:" & Replace(largeurTrait, ",", ".") & ";stroke:" & couleur & """ />" & vbNewLine
+                    End If 
+
+
+               ElseIf commande = "PM" Then
+
+                   Call RempliTableau(i, ligne, tab_1parametres)
+
+                   Select Case tab_1parametres(0) 
+                       Case 0 
+                           fillParameter = "none"
+                           polygonMode = True 
+                           Redim polygons(0) 
+                           'polygons(0) = " M " & nouvellePosition(0) & " " & nouvellePosition(1) & " "
+
+                       Case 1
+                           Redim Preserve polygons(UBound(polygons) + 1)
+                           polygons(UBound(polygons)) = polygons(UBound(polygons)) & " Z"
+                       Case 2 
+                           polygons(UBound(polygons)) = polygons(UBound(polygons)) & " Z"
+    
+                           polygonMode = False
+                      Case Else 
+                          polygonMode = False
+                  End Select
+               ElseIf commande = "EP" Then
+                   For j = 0 To UBound(polygons) 
+                       ecritureStream.WriteText "<path d =""" & polygons(j) & """ " & pointilles & " style=""fill:none;stroke-linecap:round;stroke-width:" & Replace(largeurTrait, ",", ".") & ";stroke:" & couleur & """ />" & vbNewLine
+                   Next
+
+               ElseIf commande = "FP" Then
+                   For j = 0 To UBound(polygons) 
+                       ecritureStream.WriteText "<path d =""" & polygons(j) & """ " & pointilles & " style=""fill:" & couleur & ";stroke-linecap:round;stroke-width:" & Replace(largeurTrait, ",", ".") & ";stroke:" & couleur & """ />" & vbNewLine
+                   Next
                 'Styles de ligne
                ElseIf commande = "SP" Then
                     'penDown = False
