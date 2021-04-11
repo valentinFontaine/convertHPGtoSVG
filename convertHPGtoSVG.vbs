@@ -3,6 +3,7 @@ Option Explicit
 Dim args
 Set args = Wscript.Arguments
 AnalyseFichier args(0), args(1) 
+'test_produit
 
 
 Sub AnalyseFichier(inputFile, outputFile)
@@ -26,6 +27,9 @@ Sub AnalyseFichier(inputFile, outputFile)
     Dim rayon_ellipse(1), point_centre(1)
     Dim angle_base             
     Dim pi
+    Dim matrice(1, 1), vecteur2(1,0)
+    Dim vecteur1
+    Dim determinant
 
     Dim terminator, imprimeTerm, anchor, baseLineShift
     Dim labelOrigin(0)
@@ -36,8 +40,9 @@ Sub AnalyseFichier(inputFile, outputFile)
 
     polyligne = array()
     polygons = array()
+    vecteur1 = array()
 
-    pi = 3.14159265 
+    pi = 3.14159265358979323846264338327950288419716939937510582
     mode = "Raster"
     penDown = False
     
@@ -332,16 +337,53 @@ Sub AnalyseFichier(inputFile, outputFile)
                     
                     nouvellePosition(0) = point_centre(0) + rayon_ellipse(0) * Cos(angle + angle_base)
                     nouvellePosition(1) = point_centre(1) + rayon_ellipse(0) * Sin(angle + angle_base)
+
+                    If abs(tab_4parametres(2)) = 180 Then
+                        'le determinant est nul, on prend un point intermediaire pour calculer les rayons de l'ellipse
+                        angle = angle / 2 
+                        tab_2parametres(0) = point_centre(0) + rayon_ellipse(0) * Cos(angle + angle_base)
+                        tab_2parametres(1) = point_centre(1) + rayon_ellipse(0) * Sin(angle + angle_base)
+                        angle = angle * 2
+                    Else 
+                        tab_2parametres(0) = nouvellePosition(0)
+                        tab_2parametres(1) = nouvellePosition(1)
+                    End If
+
                     Call changeRepere(nouvellePosition, inputP, echelle, False)
+                    Call changeRepere(tab_2parametres, inputP, echelle, False)
                     Call changeRepere(anciennePosition, inputP, echelle, False)
                     Call changeRepere(point_centre, inputP, echelle, False)
 
                     'ATTENTION !!!! hypothèse angle de l'ellipse parallèle aux axes du repères
-                    rayon_ellipse(1) = Sqr(((nouvellePosition(1) - point_centre(1)) * (nouvellePosition(1) - point_centre(1)) * (anciennePosition(0) - point_centre(0)) * (anciennePosition(0) - point_centre(0)) - (anciennePosition(1) - point_centre(1)) * (anciennePosition(1) - point_centre(1)) * (nouvellePosition(0) - point_centre(0)) * (nouvellePosition(0) - point_centre(0)) ) / ( (anciennePosition(0) - point_centre(0)) * (anciennePosition(0) - point_centre(0)) - (nouvellePosition(0) - point_centre(0)) * (nouvellePosition(0) - point_centre(0))))
+                    'on calcul connait 2 points, on calcule les demi-rayon (a et b) de l'ellipse à partir de l'equation : (x - x0)^2 / a^2 + (y - y0)^2 / b^2 = 1 
+                    'on fait un remplacement de variable A = 1/a^2 et B = 1/b^2 ce qui permet de résoudre une equation matricielle plus simple.
 
-                    rayon_ellipse(0) = Sqr((rayon_ellipse(1) * rayon_ellipse(1) * (nouvellePosition(0) - point_centre(0)) * (nouvellePosition(0) - point_centre(0))) / ( rayon_ellipse(1) * rayon_ellipse(1) - (nouvellePosition(1) - point_centre(1)) * (nouvellePosition(1) - point_centre(1))) )
+                    matrice(0,0) = (tab_2parametres(0) - point_centre(0)) * (tab_2parametres(0) - point_centre(0))
+                    matrice(0,1) = (tab_2parametres(1) - point_centre(1)) * (tab_2parametres(1) - point_centre(1))
+                    matrice(1,0) = (anciennePosition(0) - point_centre(0)) * (anciennePosition(0) - point_centre(0))
+                    matrice(1,1) = (anciennePosition(1) - point_centre(1)) * (anciennePosition(1) - point_centre(1))
 
-                    'Call changeRepere(rayon_ellipse, inputP, echelle, True)
+                    vecteur2(0,0) = 1
+                    vecteur2(1,0) = 1
+
+                    If det(matrice) <> 0 Then
+                        vecteur1 = produitMatrice(matriceInverse(matrice), vecteur2) 
+
+                        If vecteur1(0,0) <> 0 Then 
+                            rayon_ellipse(0) = 1 / sqr(vecteur1(0,0))
+                        Else
+                            rayon_ellipse(0) = 0
+                        End If
+
+                        If vecteur1(1,0) <> 0 Then 
+                            rayon_ellipse(1) = 1 / sqr(vecteur1(1,0))
+                        Else
+                            rayon_ellipse(1) = 0
+                        End If
+                    Else
+                        rayon_ellipse(0) = 0
+                        rayon_ellipse(1) = 0
+                    End If
 
                     'Vérifie si le 2eme point est entre le point 1 et 3
                     If Abs(angle) <= pi Then
@@ -862,9 +904,11 @@ Select Case caractere
     Case Chr(159)  
         RemplaceCaractereSpeciaux = "¿"
     Case "³" 
-        RemplaceCaractereSpeciaux = "¦"
+        RemplaceCaractereSpeciaux = "|"
     Case "í"
         RemplaceCaractereSpeciaux = "Ø"
+    Case "÷"
+        RemplaceCaractereSpeciaux = "~"
     Case Chr(248)  
         RemplaceCaractereSpeciaux = "°"
     Case Chr(0)
@@ -880,7 +924,7 @@ Function calcul_angle_trigo(tableau)
 'tableau(1) = sin alpha
 
     Dim pi
-    pi = 3.14159265 
+    pi = 3.14159265358979323846264338327950288419716939937510582
 
     If tableau(0) > 0 Then
         
@@ -907,3 +951,104 @@ Function IIf( expr, truepart, falsepart )
 End Function
 
 
+'Ne fonctionne que pour matrice 2x2 !!!
+Function det(matrice) 
+
+    'MsgBox CStr(UBound(matrice, 1)) & " " & CStr(UBound(matrice, 2)) 
+    If UBound(matrice, 1) <> 1 Or UBound(matrice, 2) <> 1 Then 
+        det = 0 
+    Else 
+        det = matrice(0, 0) * matrice(1, 1) - matrice(1, 0) * matrice(0, 1) 
+    End If 
+
+End Function
+
+'Ne fonctionne que pour matrice 2x2 !!!
+Function matriceInverse(matrice)
+    Dim resultat 
+    Dim determinant
+    Dim texte
+
+    
+    resultat = array()
+    determinant = det(matrice)
+
+    If UBound(matrice, 1) = 1 And UBound(matrice, 2) = 1 And determinant <> 0 Then
+        Redim resultat(1, 1) 
+
+        resultat(0, 0) = matrice(1, 1) / determinant
+        resultat(0, 1) = -matrice(0, 1) / determinant
+        resultat(1, 0) = -matrice(1, 0) / determinant
+        resultat(1, 1) = matrice(0, 0) / determinant
+    Else 
+        Redim resultat(0, 0)
+        resultat(0, 0) = 0
+    End If 
+
+    MatriceInverse = resultat
+
+End Function
+
+Function produitMatrice(A, B)
+
+    Dim resultat
+    Dim i, j, k
+
+    resultat = array()
+
+    If UBound(A, 2) <> UBound(B, 1) Then 
+        Redim resultat(0, 0) 
+        resultat(0, 0) = 0
+    Else 
+        Redim resultat(UBound(A, 1), UBound(B, 2))
+
+        For i = 0 To UBound(A, 1) 
+            For j = 0 To UBound(B, 2)
+
+                resultat(i,j) = 0
+                For k = 0 To UBound(A, 2)
+                    resultat(i, j) =  resultat(i,j) + A(i, k) * B(k, j) 
+                Next 
+            Next
+        Next 
+    End If 
+
+    produitMatrice = resultat
+End Function
+
+Sub test_produit()
+
+    Dim A(1, 2), B(2,1)
+    Dim C
+    Dim texte
+
+    A(0, 0) = 1
+    A(0, 1) = 2
+    A(0, 2) = 0
+    A(1, 0) = 4
+    A(1, 1) = 3
+    A(1, 2) = -1
+
+    B(0, 0) = 5
+    B(0, 1) = 1
+    B(1, 0) = 2
+    B(1, 1) = 3
+    B(2, 0) = 3
+    B(2, 1) = 4
+
+    C = produitMatrice(A, B) 
+
+    texte = ""
+    texte = texte & CStr(C(0,0)) & vbTab & CStr(C(0,1)) & VbCrlf & CStr(C(1,0)) & vbTab & CStr(C(1,1))
+    MsgBox texte
+    C = produitMatrice(C, matriceInverse(C)) 
+
+    MsgBox texte
+
+    texte = ""
+    texte = texte & CStr(C(0,0)) & vbTab & CStr(C(0,1)) & VbCrlf & CStr(C(1,0)) & vbTab & CStr(C(1,1))
+
+    MsgBox texte
+    MsgBox det(C)
+
+End Sub
