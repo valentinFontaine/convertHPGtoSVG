@@ -26,7 +26,6 @@ Sub AnalyseFichier(inputFile, outputFile)
     Dim rayon                 
     Dim rayon_ellipse(1), point_centre(1)
     Dim angle_base             
-    Dim pi
     Dim matrice(1, 1), vecteur2(1,0)
     Dim vecteur1
     Dim determinant
@@ -42,7 +41,6 @@ Sub AnalyseFichier(inputFile, outputFile)
     polygons = array()
     vecteur1 = array()
 
-    pi = 3.14159265358979323846264338327950288419716939937510582
     mode = "Raster"
     penDown = False
     
@@ -319,21 +317,21 @@ Sub AnalyseFichier(inputFile, outputFile)
                         angle_base = Atn((anciennePosition(1) - point_centre(1)) / (anciennePosition(0) - point_centre(0)))
                     ElseIf (anciennePosition(0) - point_centre(0)) < 0 Then
                         If (anciennePosition(1) - point_centre(1)) >= 0 Then
-                             angle_base = Atn((anciennePosition(1) - point_centre(1)) / (anciennePosition(0) - point_centre(0))) + pi
+                             angle_base = Atn((anciennePosition(1) - point_centre(1)) / (anciennePosition(0) - point_centre(0))) + pi()
                         Else
-                            angle_base = Atn((anciennePosition(1) - point_centre(1)) / (anciennePosition(0) - point_centre(0))) - pi
+                            angle_base = Atn((anciennePosition(1) - point_centre(1)) / (anciennePosition(0) - point_centre(0))) - pi()
                         End If
                     Else
                         If (anciennePosition(1) - point_centre(1)) > 0 Then
-                            angle_base = pi / 2
+                            angle_base = pi() / 2
                         ElseIf (anciennePosition(1) - point_centre(1)) < 0 Then
-                            angle_base = -pi / 2
+                            angle_base = -pi() / 2
                         Else
                             angle_base = 0
                         End If
                     End If
                     
-                    angle = tab_4parametres(2) * pi / 180
+                    angle = tab_4parametres(2) * pi() / 180
                     
                     nouvellePosition(0) = point_centre(0) + rayon_ellipse(0) * Cos(angle + angle_base)
                     nouvellePosition(1) = point_centre(1) + rayon_ellipse(0) * Sin(angle + angle_base)
@@ -386,7 +384,7 @@ Sub AnalyseFichier(inputFile, outputFile)
                     End If
 
                     'Vérifie si le 2eme point est entre le point 1 et 3
-                    If Abs(angle) <= pi Then
+                    If Abs(angle) <= pi() Then
                         grandArc = 0
                     Else
                         grandArc = 1
@@ -923,14 +921,12 @@ Function calcul_angle_trigo(tableau)
 'tableau(0) = cos alpha
 'tableau(1) = sin alpha
 
-    Dim pi
-    pi = 3.14159265358979323846264338327950288419716939937510582
 
     If tableau(0) > 0 Then
-        
-        calcul_angle_trigo = Atn(tableau(1) / tableau(0)) * 180 / pi
+    
+        calcul_angle_trigo = Atn(tableau(1) / tableau(0)) * 180 / pi()
     ElseIf tableau(0) < 0 Then
-        calcul_angle_trigo = Atn(tableau(1) / tableau(0)) * 180 / pi + IIf(tableau(1) < 0, -90, 90)
+        calcul_angle_trigo = Atn(tableau(1) / tableau(0)) * 180 / pi() + IIf(tableau(1) < 0, -90, 90)
     Else
         If tableau(1) < 0 Then
             calcul_angle_trigo = -90
@@ -1052,3 +1048,9 @@ Sub test_produit()
     MsgBox det(C)
 
 End Sub
+
+Function pi() 
+
+    pi = 3.14159265358979323846264338327950288419716939937510582
+End Function
+
